@@ -37,12 +37,13 @@ func newShape(rows int, cols int, left float64, top float64, size float64, thick
 	return s
 }
 func (s *shape) rotate() {
+	s.flipH()
 	s.transpose()
+
 }
 
 func (s *shape) flipV() {
 	newGrid := make([][]*object, 0)
-	fmt.Printf("%v\n", s.rows)
 	for i := s.rows - 1; i >= 0; i-- {
 		newGrid = append(newGrid, s.grid[i])
 	}
@@ -50,6 +51,18 @@ func (s *shape) flipV() {
 	s.pos()
 	s.draw()
 
+}
+func (s *shape) flipH() {
+	newGrid := s.grid
+	for idx, x := range s.grid {
+		newGrid[idx] = make([]*object, 0)
+		for i := s.cols - 1; i >= 0; i-- {
+			newGrid[idx] = append(newGrid[idx], x[i])
+		}
+	}
+	s.grid = newGrid
+	s.pos()
+	s.draw()
 }
 func (s *shape) transpose() {
 	newCols := s.rows
@@ -96,11 +109,11 @@ func (s *shape) pos() {
 	for y := range s.grid {
 		for x := range s.grid[y] {
 			if s.grid[y][x] != nil {
-				fmt.Printf("%v %v     ", s.grid[y][x].left, s.grid[y][x].top)
+				//fmt.Printf("%v %v     ", s.grid[y][x].left, s.grid[y][x].top)
 				s.grid[y][x].left = s.left + float64(x)
 				s.grid[y][x].top = s.top + float64(y)
 				s.grid[y][x].pos()
-				fmt.Printf("%v %v \n", s.grid[y][x].left, s.grid[y][x].top)
+				//fmt.Printf("%v %v \n", s.grid[y][x].left, s.grid[y][x].top)
 			}
 		}
 	}
@@ -192,11 +205,11 @@ func (s *shape) playerMove(key pixelgl.Button) {
 	case pixelgl.KeyS:
 		s.flipV()
 	case pixelgl.KeyD:
-		s.transpose()
+		s.flipH()
 	case pixelgl.KeyA:
-		s.flipV()
-		s.transpose()
-		s.flipV()
+		s.flipH()
+	case pixelgl.KeySpace:
+		s.rotate()
 	}
 
 }
