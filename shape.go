@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"image/color"
 
+	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
 )
 
 type shape struct {
-	rows     int
-	cols     int
-	left     float64
-	size     float64
-	top      float64
-	rotation int
+	rows      int
+	cols      int
+	left      float64
+	size      float64
+	top       float64
+	thickness float64
+	rotation  int
 
 	grid [][]*object
 }
@@ -23,8 +25,9 @@ func (s *shape) makeGrid(rows int, cols int) {
 
 }
 
-func newShape(rows int, cols int, left float64, top float64, size float64) *shape {
+func newShape(rows int, cols int, left float64, top float64, size float64, thickness float64) *shape {
 	s := new(shape)
+	s.thickness = thickness
 	s.rows = rows
 	s.cols = cols
 	s.left = left
@@ -82,7 +85,7 @@ func (s *shape) makeRow(row []*color.RGBA) []*object {
 		if x == nil {
 			data[i] = nil
 		} else {
-			data[i] = newObject(s.left+float64(i), s.top+float64(len(s.grid)), s.size, *x)
+			data[i] = newObject(s.left+float64(i), s.top+float64(len(s.grid)), s.size, s.thickness, *x)
 		}
 	}
 	return data
@@ -101,6 +104,24 @@ func (s *shape) pos() {
 			}
 		}
 	}
+}
+func (s *shape) addRow2(row []*object) {
+	data := make([]*object, s.cols)
+	for i, x := range row {
+		fmt.Printf("%v %v\n", i, x)
+		if x == nil {
+			data[i] = nil
+		} else {
+			x.left = s.left + float64(i)
+			x.top = s.top + float64(len(s.grid))
+			x.size = s.size
+			x.image = imdraw.New(nil)
+			data[i] = x
+
+		}
+	}
+	s.grid = append(s.grid, data)
+	s.pos()
 }
 func (s *shape) addRow(row []*color.RGBA) {
 	data := s.makeRow(row)
@@ -169,6 +190,8 @@ func (s *shape) playerMove(key pixelgl.Button) {
 	case pixelgl.KeyW:
 		s.flipV()
 	case pixelgl.KeyS:
+		s.flipV()
+	case pixelgl.KeyD:
 		s.transpose()
 	case pixelgl.KeyA:
 		s.flipV()

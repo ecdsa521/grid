@@ -9,11 +9,14 @@ import (
 )
 
 type object struct {
-	left  float64
-	top   float64
-	size  float64
-	color color.RGBA
-	image *imdraw.IMDraw
+	left      float64
+	top       float64
+	size      float64
+	thickness float64
+	shape     func(o *object)
+	push      func(o *object)
+	color     color.RGBA
+	image     *imdraw.IMDraw
 }
 
 func (o *object) draw() {
@@ -51,20 +54,34 @@ func (o *object) move(direction int) {
 }
 
 func (o *object) pos() {
+	if o == nil {
+		return
+	}
 	x1, x2, y1, y2 := 50+(o.left)*o.size, 50+(o.left+1)*o.size, 750-(o.top)*o.size, 750-(o.top+1)*o.size
 	o.image.Clear()
 	o.image.Color = o.color
-	o.image.Push(pixel.V(x1+1, y1), pixel.V(x1, y2))
-	o.image.Push(pixel.V(x2, y2), pixel.V(x2, y1))
-	o.image.Push(pixel.V(x2, y1), pixel.V(x1, y1))
-	o.image.Line(1)
+	if o.push == nil {
+		o.image.Push(pixel.V(x1+1, y1), pixel.V(x1, y2))
+		//o.image.Push(pixel.V(x2, y2), pixel.V(x2, y1))
+		o.image.Push(pixel.V(x2, y1), pixel.V(x1, y1))
+	} else {
+		o.push(o)
+	}
+
+	if o.shape == nil {
+		o.image.Rectangle(o.thickness)
+	} else {
+		o.shape(o)
+	}
+
 }
-func newObject(left float64, top float64, size float64, color color.RGBA) *object {
+func newObject(left float64, top float64, size float64, thickness float64, color color.RGBA) *object {
 	t := new(object)
 	t.size = size
 	t.left = left
 	t.top = top
 	t.color = color
+	t.thickness = thickness
 	t.image = imdraw.New(nil)
 	t.pos()
 	return t
@@ -77,9 +94,10 @@ func newBorder(x1 float64, x2 float64, y1 float64, y2 float64, color color.RGBA)
 	t.image = imdraw.New(nil)
 	t.image.Color = color
 	t.image.Push(pixel.V(x1, y1), pixel.V(x1, y2))
-	t.image.Push(pixel.V(x2, y2), pixel.V(x2, y1))
+	//t.image.Push(pixel.V(x2, y2), pixel.V(x2, y1))
 	t.image.Push(pixel.V(x2, y1), pixel.V(x1, y1))
-	t.image.Line(1)
+	t.image.Rectangle(1)
+
 	return t
 }
 func (o *object) playerMove(key pixelgl.Button) {
